@@ -1,0 +1,504 @@
+-- Official Bigboyhub Script Add me at rickastley9026
+-- DOES NOT WORK FOR ALL GAMES
+-- Games i found it works on
+--Some minecraft copies
+--Prison life games that has gift or products
+local bigboyhubsuccess,bigboyhuberror = pcall(function()
+getgenv().bigboyhub_version = "6.9.4.2.0" 
+
+
+local queueonteleport = queue_on_teleport or queueonteleport
+local setclipboard = toclipboard or setrbxclipboard or setclipboard
+local clonefunction = clonefunc or clonefunction or function(f) return f end
+local setthreadidentity = set_thread_identity or setthreadcaps or setthreadidentity
+
+if getnamecallmethod then 
+    local getnamecallmethod = get_namecall_method or getnamecallmethod
+end
+
+
+local a = Instance.new("Part")
+for b, c in pairs(getreg()) do
+    if type(c) == "table" and #c then
+        if rawget(c, "__mode") == "kvs" then
+            for d, e in pairs(c) do
+                if e == a then
+                    getgenv().InstanceList = c
+                    break
+                end
+            end
+        end
+    end
+end
+local f = {}
+function f.invalidate(g)
+    if not InstanceList then
+        return
+    end
+    for b, c in pairs(InstanceList) do
+        if c == g then
+            InstanceList[b] = nil
+            return g
+        end
+    end
+end
+if not cloneref then
+    getgenv().cloneref = f.invalidate
+end
+
+getrenv().Visit = cloneref(game:GetService("Visit"))
+getrenv().MarketplaceService = cloneref(game:GetService("MarketplaceService"))
+getrenv().HttpRbxApiService = cloneref(game:GetService("HttpRbxApiService"))
+local CoreGui = cloneref(game:GetService("CoreGui")) 
+local Players = cloneref(game:GetService("Players")) 
+
+getrenv().getgenv = clonefunction(getgenv)
+
+
+-- stealth_call function (this shit is needed for Purchase Exploits so dont change shit here) 
+getgenv().stealth_call = function(script_code)
+    if clonefunction and setthreadidentity then
+        getrenv()._set = clonefunction(setthreadidentity)
+    else
+        warn("Bigboyhub: clonefunction or setthreadidentity is nil. Stealth call might not work as intended.")
+        getrenv()._set = setthreadidentity 
+    end
+
+    local old_hook
+    old_hook =
+        hookmetamethod(
+        game,
+        "__index",
+        function(a_hook, b_hook)
+            task.spawn(
+                function()
+                    if getrenv()._set then
+                        getrenv()._set(7)
+                    else
+                        warn("Bigboyhub: _set is nil in stealth_call task.spawn. Attempting direct setthreadidentity.")
+                        if setthreadidentity then
+                            local success_si, err_si = pcall(setthreadidentity, 7)
+                            if not success_si then
+                                 warn("Bigboyhub: Direct setthreadidentity failed in task.spawn:", err_si)
+                            end
+                        else
+                            warn("Bigboyhub: setthreadidentity is nil, cannot set thread identity.")
+                        end
+                    end
+                    task.wait(0.1)
+                    local went, error_msg
+                    local ls_success, ls_func = pcall(loadstring, script_code)
+                    if ls_success and type(ls_func) == "function" then
+                        went, error_msg = pcall(ls_func)
+                    else
+                        went = false
+                        error_msg = "Failed to load script string: " .. tostring(ls_func) 
+                    end
+                    -- print("Stealth call execution status:", went, "Error:", error_msg) just uncomment this if u want i really ont fucking care
+                    if went then
+                        local check = Instance.new("LocalScript")
+                        check.Parent = Visit
+                    end
+                end
+            )
+            hookmetamethod(game, "__index", old_hook)
+            return old_hook(a_hook, b_hook)
+        end
+    )
+end
+
+task.spawn(
+    function()
+        local discord_load_s, discord = pcall(loadstring, game:HttpGet("https://raw.githubusercontent.com/ckw69/Wyborn/refs/heads/main/main%202"))
+        if not discord_load_s or not discord then
+            warn("Bigboyhub: Failed to load Discord UI library:", discord)
+            return
+        end
+        discord = discord() 
+
+        local win =
+            discord:Window("Bigboyhub " .. getgenv().bigboyhub_version .. " - Bigboysu likes using Bigboyhub")
+        local serv = win:Server("Bigboyhub", "http://www.roblox.com/asset/?id=6031075938")
+        
+        -- ##################################################################################
+        -- ## PURCHASE EXPLOITS DISCORD:rickastley9026                                  ##
+        -- ##################################################################################
+        local purchase_ch = serv:Channel("Purchase Exploits")
+        local dnames = {}
+        local dproductIds = {}
+        local HttpService = game:GetService("HttpService")
+
+        local fetchSuccess, fetchError = pcall(function()
+            local cursor = nil
+            local limit = 50 
+            local productsFetchedSuccessfully = false
+
+            repeat
+                local url = "https://apis.roblox.com/developer-products/v2/universes/" .. tostring(game.GameId) .. "/developerproducts?limit=" .. tostring(limit)
+                if cursor and cursor ~= "" then
+                    url = url .. "&cursor=" .. HttpService:UrlEncode(cursor)
+                end
+
+                -- print("Bigboyhub: Fetching DevProducts from URL: " .. url) just uncomment this if u want i really ont fucking care
+                local responseText = game:HttpGet(url)
+                -- print("Bigboyhub: Raw API Response: " .. tostring(responseText)) just uncomment this if u want i really ont fucking care
+
+                local decodedResponse
+                local decodeSuccess, decodeResult = pcall(function()
+                    return HttpService:JSONDecode(responseText)
+                end)
+
+                if decodeSuccess then
+                    decodedResponse = decodeResult
+                    -- print("Bigboyhub: Decoded API Response: ", decodedResponse) just uncomment this if u want i really ont fucking care
+                else
+                    -- print("Bigboyhub: JSON Decode Failed: " .. tostring(decodeResult)) just uncomment this if u want i really ont fucking care
+                    decodedResponse = nil
+                end
+
+                local productsList = nil
+                if decodedResponse and decodedResponse.developerProducts and type(decodedResponse.developerProducts) == "table" then
+                    productsList = decodedResponse.developerProducts
+                    -- print("Bigboyhub: Found products under 'developerProducts' key.") just uncomment this if u want i really ont fucking care
+                elseif decodedResponse and decodedResponse.data and type(decodedResponse.data) == "table" then
+                     productsList = decodedResponse.data
+                    -- print("Bigboyhub: Found products under 'data' key.") just uncomment this if u want i really ont fucking care
+                end
+
+                if productsList then
+                    productsFetchedSuccessfully = true
+                    if #productsList == 0 and (cursor == nil or cursor == "") then
+                        -- print("Bigboyhub: No developer products found on this page (or first page).") just uncomment this if u want i really ont fucking care
+                    end
+                    for _, developerProduct in ipairs(productsList) do
+                        if developerProduct.Name and developerProduct.ProductId then -- Ensure correct casing if API changes
+                            table.insert(dnames, developerProduct.Name)
+                            table.insert(dproductIds, developerProduct.ProductId)
+                            -- print("Bigboyhub: Found DevProduct - Name: " .. developerProduct.Name .. ", ID: " .. developerProduct.ProductId) just uncomment this if u want i really ont fucking care
+                        else
+                            -- print("Bigboyhub: Warning - Developer product item missing Name or ProductId (check case):", HttpService:JSONEncode(developerProduct)) just uncomment this if u want i really ont fucking care
+                        end
+                    end
+                elseif (cursor == nil or cursor == "") then
+                    -- print("Bigboyhub: Failed to fetch developer products or data format unexpected on first page (productsList is nil).") just uncomment this if u want i really ont fucking care
+                end
+
+                if decodedResponse and decodedResponse.nextPageCursor and decodedResponse.nextPageCursor ~= "" then
+                    cursor = decodedResponse.nextPageCursor
+                    -- print("Bigboyhub: Next page cursor: " .. cursor) just uncomment this if u want i really ont fucking care
+                else
+                    cursor = nil
+                    -- print("Bigboyhub: No next page cursor or end of data, ending fetch.") just uncomment this if u want i really ont fucking care
+                end
+
+            until not cursor
+
+            if not productsFetchedSuccessfully and #dnames == 0 then
+                -- print("Bigboyhub: Fetching completed, but no products were successfully processed into dnames.") just uncomment this if u want i really ont fucking care
+            end
+
+        end)
+
+        if not fetchSuccess then
+            -- print("Bigboyhub: CRITICAL Error during pcall for fetching developer products: " .. tostring(fetchError)) just uncomment this if u want i really ont fucking care
+            discord:Notification("API Error", "Failed to load developer products. Check console (F9).", "Okay!")
+        end
+
+        if #dnames == 0 then
+            -- print("Bigboyhub: Developer product list (dnames) is empty after fetch attempt. Adding placeholder for UI.") just uncomment this if u want i really ont fucking care
+            table.insert(dnames, " ") 
+        end
+
+        purchase_ch:Label("Fake Purchaser!\nThis tricks server that you bought a DevProduct!")
+        purchase_ch:Label("Only works in some games since it uses the old api lmao ")
+        local selected_devprod_index
+        purchase_ch:Dropdown(
+            "Below is a list of all DevProducts in this game!",
+            dnames,
+            function(x)
+                selected_devprod_index = nil
+                for i_dp, name_val_dp in ipairs(dnames) do -- Renamed loop variables
+                    if name_val_dp == x then
+                        selected_devprod_index = i_dp
+                        break
+                    end
+                end
+            end
+        )
+        getgenv().bigboyhublooppurchases = false
+        purchase_ch:Label("If nothing shows above, no DevProducts found.")
+        purchase_ch:Toggle(
+            "Loop Selected Dev Product",
+            false,
+            function(bool)
+                getgenv().bigboyhublooppurchases = bool
+                while getgenv().bigboyhublooppurchases == true and task.wait() do
+                    if selected_devprod_index and dproductIds[selected_devprod_index] then
+                        local product_id_to_fire = dproductIds[selected_devprod_index]
+                        pcall(
+                            function()
+                                if getgenv().stealth_call then
+                                    getgenv().stealth_call(
+                                        "game:GetService('MarketplaceService'):SignalPromptProductPurchaseFinished(game.Players.LocalPlayer.UserId, " ..
+                                            product_id_to_fire .. ", true) "
+                                    )
+                                else
+                                    warn("Bigboyhub: stealth_call is not defined!")
+                                end
+                            end
+                        )
+                    else
+                        if getgenv().bigboyhublooppurchases then
+                             -- print("Bigboyhub Loop: No valid product selected or product ID missing for loop.") uncomment if u want idfc nigga
+                             task.wait(1) 
+                        end
+                    end
+                end
+            end
+        )
+        purchase_ch:Button(
+            "Fire Selected Dev Product!",
+            function()
+                if selected_devprod_index and dproductIds[selected_devprod_index] then
+                    local product_id_to_fire = dproductIds[selected_devprod_index]
+                    pcall(
+                        function()
+                            if getgenv().stealth_call then
+                                getgenv().stealth_call(
+                                    "game:GetService('MarketplaceService'):SignalPromptProductPurchaseFinished(game.Players.LocalPlayer.UserId, " ..
+                                        product_id_to_fire .. ", true) "
+                                )
+                            else
+                                 warn("Bigboyhub: stealth_call is not defined!")
+                            end
+                        end
+                    )
+                    task.wait(0.2)
+                    if not Visit:FindFirstChild("LocalScript") then
+                        discord:Notification(
+                            "Error",
+                            "Your executor blocked function SignalPromptProductPurchaseFinished or stealth_call failed.",
+                            "Okay!"
+                        )
+                    else
+                        discord:Notification(
+                            "Success",
+                            "Fired PromptProductPurchaseFinished signal to server with productId: " ..
+                                tostring(product_id_to_fire),
+                            "Okay!"
+                        )
+                        if Visit:FindFirstChild("LocalScript") then Visit:FindFirstChild("LocalScript"):Destroy() end
+                    end
+                else
+                    discord:Notification("Error", "Please select a DevProduct from the list, or the selected product is invalid.", "Okay!")
+                end
+            end
+        )
+        purchase_ch:Button(
+            "Fire All Dev Products",
+            function()
+                if #dproductIds == 0 or (#dproductIds == 1 and (dproductIds[1] == nil or dproductIds[1] == "" or dproductIds[1] == " ")) then
+                    discord:Notification("Info", "No developer products found to fire.", "Okay!")
+                    return
+                end
+                local starttickcc = tick()
+                for i_adp, product_id_to_fire_adp in pairs(dproductIds) do
+                    if product_id_to_fire_adp and product_id_to_fire_adp ~= "" and product_id_to_fire_adp ~= " " then
+                        task.spawn( 
+                            function()
+                                pcall(
+                                    function()
+                                        if getgenv().stealth_call then
+                                            getgenv().stealth_call(
+                                                "game:GetService('MarketplaceService'):SignalPromptProductPurchaseFinished(game.Players.LocalPlayer.UserId, " ..
+                                                    product_id_to_fire_adp .. ", true) "
+                                            )
+                                        else
+                                            warn("Bigboyhub: stealth_call is not defined!")
+                                        end
+                                    end
+                                )
+                            end
+                        )
+                        task.wait() 
+                    end
+                end
+                local endtickcc = tick()
+                local durationxd = endtickcc - starttickcc
+                discord:Notification(
+                    "Attempt",
+                    "Fired All Dev Products! Took " .. string.format("%.2f", durationxd) .. " Seconds!",
+                    "Okay!"
+                )
+            end
+        )
+        getgenv().bigboyhublooppurchases2 = false
+        purchase_ch:Toggle(
+            "Loop All Dev Products",
+            false,
+            function(bool)
+                getgenv().bigboyhublooppurchases2 = bool
+                while getgenv().bigboyhublooppurchases2 == true and task.wait() do
+                    if #dproductIds == 0 or (#dproductIds == 1 and (dproductIds[1] == nil or dproductIds[1] == "" or dproductIds[1] == " ")) then
+                         if getgenv().bigboyhublooppurchases2 then
+                            -- print("Bigboyhub Loop All: No developer products to loop.") uncomment this if u want debug or something (fuck you)
+                            task.wait(1) 
+                         end
+                    else
+                        for i_ladp, product_id_to_fire_ladp in pairs(dproductIds) do 
+                            if product_id_to_fire_ladp and product_id_to_fire_ladp ~= "" and product_id_to_fire_ladp ~= " " then
+                                task.spawn( 
+                                    function()
+                                        pcall(
+                                            function()
+                                                if getgenv().stealth_call then
+                                                    getgenv().stealth_call(
+                                                        "game:GetService('MarketplaceService'):SignalPromptProductPurchaseFinished(game.Players.LocalPlayer.UserId, " ..
+                                                            product_id_to_fire_ladp .. ", true) "
+                                                    )
+                                                else
+                                                     warn("Bigboyhub: stealth_call is not defined!")
+                                                end
+                                            end
+                                        )
+                                    end
+                                )
+                                task.wait() -- Small delay
+                            end
+                        end
+                    end
+                end
+            end
+        )
+        purchase_ch:Seperator()
+        purchase_ch:Label("Pretty much the same as the one above but for gamepass")
+        local bigboyhubgamepass_data = nil
+        pcall(function()
+            bigboyhubgamepass_data = HttpService:JSONDecode(
+                game:HttpGet(
+                    "https://games.roblox.com/v1/games/" .. game.GameId .. "/game-passes?limit=100&sortOrder=1" 
+                )
+            )
+        end)
+
+        local gnames = {}
+        local gproductIds = {} -- For game pass IDs
+        if bigboyhubgamepass_data and bigboyhubgamepass_data.data then
+            for i_gp_data, v_gp_data in pairs(bigboyhubgamepass_data.data) do
+                table.insert(gnames, v_gp_data.name)
+                table.insert(gproductIds, v_gp_data.id)
+            end
+        end
+        if #gnames == 0 then table.insert(gnames, " ") end 
+
+        local gamepass_id_selected = nil
+        purchase_ch:Dropdown(
+            "Below is a list of all GamePass in this game!",
+            gnames,
+            function(x)
+                gamepass_id_selected = nil
+                for i_gp_select, name_val_gp_select in ipairs(gnames) do 
+                    if name_val_gp_select == x then
+                        gamepass_id_selected = gproductIds[i_gp_select]
+                        break
+                    end
+                end
+            end
+        )
+        purchase_ch:Label("If nothing shows above, no GamePass found.")
+        purchase_ch:Button(
+            "Fire Selected Gamepass",
+            function()
+                if gamepass_id_selected then
+                    pcall(
+                        function()
+                            if getgenv().stealth_call then
+                                getgenv().stealth_call(
+                                    "game:GetService('MarketplaceService'):SignalPromptGamePassPurchaseFinished(game.Players.LocalPlayer, " ..
+                                        tostring(gamepass_id_selected) .. ", true)"
+                                )
+                            else
+                                warn("Bigboyhub: stealth_call is not defined!")
+                            end
+                        end
+                    )
+                    task.wait(0.2)
+                    if not Visit:FindFirstChild("LocalScript") then
+                        discord:Notification(
+                            "Error",
+                            "Your executor blocked function SignalPromptGamePassPurchaseFinished or stealth_call failed.",
+                            "Okay!"
+                        )
+                    else
+                        discord:Notification(
+                            "Success",
+                            "Fired PromptGamePassPurchaseFinished signal to server with gamePassId: " .. 
+                                tostring(gamepass_id_selected),
+                            "Okay!"
+                        )
+                        if Visit:FindFirstChild("LocalScript") then Visit:FindFirstChild("LocalScript"):Destroy() end
+                    end
+                else
+                    discord:Notification("Error", "No GamePass selected or GamePass ID missing.", "Okay!")
+                end
+            end
+        )
+        purchase_ch:Seperator()
+        purchase_ch:Label("Signals to server that an item purchase failed.")
+        purchase_ch:Label("This can trick servers to reprompt an item!")
+        local returnvalprompt = false
+        purchase_ch:Toggle(
+            "Item Purchase Success Return Value",
+            returnvalprompt,
+            function(bool)
+                returnvalprompt = bool
+            end
+        )
+        purchase_ch:Textbox( 
+            "Item ID of the UGC item",
+            "Enter the Item ID and press Enter...", 
+            true, 
+            function(t) -- t is the text from the textbox
+                local tt = tonumber(t)
+                if type(tt) == "number" then
+                    pcall(
+                        function()
+                            if getgenv().stealth_call then
+                                getgenv().stealth_call(
+                                    "game:GetService('MarketplaceService'):SignalPromptPurchaseFinished(game.Players.LocalPlayer, " ..
+                                        tt ..
+                                            ", false) game:GetService('MarketplaceService'):SignalPromptPurchaseFinished(game.Players.LocalPlayer, " ..
+                                                tt .. ", " .. tostring(returnvalprompt) .. ")"
+                                )
+                            else
+                                warn("Bigboyhub: stealth_call is not defined!")
+                            end
+                        end
+                    )
+                    task.wait(0.2)
+                    if not Visit:FindFirstChild("LocalScript") then
+                        discord:Notification(
+                            "Error",
+                            "Your executor blocked function SignalPromptPurchaseFinished or stealth_call failed.",
+                            "Okay!"
+                        )
+                    else
+                        discord:Notification(
+                            "Success",
+                            "Fired signal PromptPurchaseFinished with bool " ..tostring(returnvalprompt) .. " and assetId: " .. tostring(tt), -- Corrected message
+                            "Okay!"
+                        )
+                        if Visit:FindFirstChild("LocalScript") then Visit:FindFirstChild("LocalScript"):Destroy() end
+                    end
+                else
+                    discord:Notification("Error", "That's... Not an Item ID.", "Okay!")
+                end
+            end
+        )
+        purchase_ch:Seperator()
+    end
+)
+if not bigboyhubsuccess or bigboyhuberror ~= nil then
+    warn("Bigboyhub Script Error: " .. tostring(bigboyhuberror))
+end
+end)
