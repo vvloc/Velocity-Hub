@@ -1,0 +1,132 @@
+-- Super Power Lifting Simulator Velocity Hub v2.1
+-- Sirius.Menu (Rayfield) GUI with AutoClicker integration
+
+-----------------------------------------------------
+-- Services
+-----------------------------------------------------
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local mouse = LocalPlayer:GetMouse()
+
+-----------------------------------------------------
+-- Variables
+-----------------------------------------------------
+local autoClick = false
+local CPS = 10
+local clickInterval = 1 / CPS
+
+-----------------------------------------------------
+-- Rayfield Loader
+-----------------------------------------------------
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-----------------------------------------------------
+-- Window
+-----------------------------------------------------
+local Window = Rayfield:CreateWindow({
+    Name = "Velocity Hub",
+    LoadingTitle = "Super Power Lifting Simulator",
+    LoadingSubtitle = "by Velocity",
+    ConfigurationSaving = { Enabled = true, FolderName = "VelocityHub", FileName = "SuperPowerClickConfig" },
+    Discord = { Enabled = false },
+    KeySystem = false
+})
+
+-----------------------------------------------------
+-- Function: Auto Click Logic
+-----------------------------------------------------
+local function doClick()
+    if not LocalPlayer.Character then return end
+    local target = mouse.Target
+    local character = LocalPlayer.Character
+
+    -- If holding a tool, activate it
+    local tool = character:FindFirstChildOfClass("Tool")
+    if tool then
+        tool:Activate()
+    end
+
+    -- If pointing at a ClickDetector, fire its MouseClick (client-side only)
+    if target then
+        local clickDet = target:FindFirstChildOfClass("ClickDetector")
+        if clickDet then
+            clickDet:MouseClick(LocalPlayer)
+        end
+    end
+end
+
+-- Main loop
+task.spawn(function()
+    while task.wait(clickInterval) do
+        if autoClick then
+            doClick()
+        end
+    end
+end)
+
+-----------------------------------------------------
+-- MAIN TAB
+-----------------------------------------------------
+local MainTab = Window:CreateTab("Main", nil)
+
+MainTab:CreateParagraph({
+    Title = "Features",
+    Content = "• Auto Clicks tools or ClickDetectors around your mouse.\n• CPS adjustable to control click speed.\n• Safe on Mobile & PC."
+})
+
+MainTab:CreateParagraph({
+    Title = "Note",
+    Content = "High CPS may cause lag or auto-click too fast. Adjust carefully."
+})
+
+MainTab:CreateSection("Main Features")
+
+-- Toggle AC
+MainTab:CreateToggle({
+    Name = "Toggle AC",
+    CurrentValue = false,
+    Flag = "AutoClickerToggle",
+    Callback = function(Value)
+        autoClick = Value
+    end
+})
+
+-- CPS input
+MainTab:CreateInput({
+    Name = "CPS",
+    PlaceholderText = "Enter clicks per second (e.g. 10)",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        local v = tonumber(Value)
+        if v and v > 0 then
+            CPS = v
+            clickInterval = 1 / CPS
+        end
+    end
+})
+
+-----------------------------------------------------
+-- GAMEPASSES TAB
+-----------------------------------------------------
+local GamepassesTab = Window:CreateTab("Gamepasses", nil)
+GamepassesTab:CreateParagraph({
+    Title = "Notice",
+    Content = "Note: These Are Very Powerful Gamepasses. Set As 1 To Enable or 0 To Disable."
+})
+GamepassesTab:CreateSection("Gamepasses Features")
+
+-- Fast Lift input (allows 0 or 1)
+GamepassesTab:CreateInput({
+    Name = "Fast Lift",
+    PlaceholderText = "Enter 1 to enable, 0 to disable",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        local val = tonumber(Value)
+        if val == 1 or val == 0 then
+            local playerData = LocalPlayer:WaitForChild("PlayerData")
+            local gamePass = playerData:WaitForChild("GamePass")
+            gamePass.FastLift.Value = val
+        end
+    end
+})
